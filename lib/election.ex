@@ -7,10 +7,31 @@ defmodule Election do
     ],
     next_id: 3
   )
-  
+
   def update(election, cmd) when is_binary(cmd) do
     update(election, String.split(cmd))
   end
+
+  def update(election, ["v" <> _, id]) do
+    vote(election, String.to_integer(id))
+  end
+
+  defp vote(election, id) do
+    candidates = Enum.map(election.candidates, &maybe_inc_vote(&1, id))
+    Map.put(election, :candidates, candidates)
+  end
+  
+  defp maybe_inc_vote(candidate, id) when is_integer(id) do
+    maybe_inc_vote(candidate, candidate.id == id)
+  end
+
+  defp maybe_inc_vote(candidate, _inc_vote = false), do: candidate
+
+  defp maybe_inc_vote(candidate, _inc_vote = true) do
+    Map.update!(candidate, :votes, &(&1 + 1))
+  end
+  
+  defp vote(election, _errors), do: election
 
   def update(election, ["n" <> _ | args]) do
     name = Enum.join(args, " ")
